@@ -3,6 +3,8 @@
 
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
+// teste
+
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
