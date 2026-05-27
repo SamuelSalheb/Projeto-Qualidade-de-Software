@@ -1,5 +1,5 @@
 import CharacterCrud from './characterCrud'
-import MonsterCrud from './monstercrud.tsx'
+import MonsterCrud from './monsterCrud.tsx'
 import SpellSearch from './spellsearch' // Importa a nova tela de magias
 import './App.css'
 
