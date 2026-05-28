@@ -57,4 +57,26 @@ describe('🌍 Testes de Integração - Monstros', () => {
     // Desconecta o banco após os testes para o Jest encerrar corretamente
     await prisma.$disconnect();
   });
+
+  // =======================================================
+  // 🐉 TESTES DAS ROTAS EXTERNAS (API INTEGRAÇÃO D&D)
+  // =======================================================
+
+  it('deve listar as raças oficiais da API externa (GET /api-external/races)', async () => {
+    const response = await request(app).get('/api-external/races');
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('results');
+  });
+
+  it('deve listar as classes oficiais da API externa (GET /api-external/classes)', async () => {
+    const response = await request(app).get('/api-external/classes');
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('results');
+  });
+
+  it('deve listar os monstros oficiais da API externa (GET /api-external/monsters)', async () => {
+    const response = await request(app).get('/api-external/monsters');
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('results');
+  });
 });
