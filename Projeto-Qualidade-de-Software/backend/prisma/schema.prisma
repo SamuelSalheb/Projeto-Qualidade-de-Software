@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// 1. Tabela de Usuários (users)
+model User {
+  id         String      @id @default(uuid())
+  email      String      @unique
+  name       String
+  password   String
+  characters Character[] // Relacionamento: Um usuário pode ter vários personagens
+  createdAt  DateTime    @default(now())
+
+  @@map("users") // Garante que no banco a tabela se chamará "users"
+}
+
+// 2. Tabela de Personagens (characters)
+model Character {
+  id        String   @id @default(uuid())
+  name      String
+  race      String
+  class     String
+  level     Int      @default(1)
+  hp        Int
+  strength  Int
+  dexterity Int
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("characters")
+}
+
+// 3. Tabela de Modelos de Monstros (monsters_templates)
+model MonsterTemplate {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  type         String   // Ex: Dragão, Morto-vivo, Humanoide
+  challengeRating Float // Margem de Desafio (CR)
+  hp           Int
+  armorClass   Int      // Classe de Armadura (AC)
+  createdAt    DateTime @default(now())
+
+  @@map("monsters_templates")
+}
