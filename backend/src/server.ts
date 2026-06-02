@@ -1,8 +1,10 @@
 import express from 'express';
+import cors from 'cors';
 import { dndService } from './services/dndService';
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 // ==========================================
@@ -11,6 +13,8 @@ app.use(express.json());
 
 let characters: any[] = [];
 let monsters: any[] = [];
+let builds: any[] = [];
+let reviews: any[] = [];
 
 // ==========================================
 // 🧙‍♂️ ROTAS DE PERSONAGENS
@@ -19,6 +23,14 @@ let monsters: any[] = [];
 // Criar personagem
 app.post('/characters', async (req, res) => {
   try {
+    const { name, race, class: cls } = req.body;
+
+    if (!name || !race || !cls) {
+      return res.status(400).json({
+        error: 'Campos obrigatórios: name, race, class'
+      });
+    }
+
     const character = {
       id: Date.now().toString(),
       ...req.body
@@ -87,6 +99,14 @@ app.delete('/characters/:id', async (req, res) => {
 // Criar monstro
 app.post('/monsters', async (req, res) => {
   try {
+    const { name, type } = req.body;
+
+    if (!name || !type) {
+      return res.status(400).json({
+        error: 'Campos obrigatórios: name, type'
+      });
+    }
+
     const monster = {
       id: Date.now().toString(),
       ...req.body
@@ -149,13 +169,114 @@ app.delete('/monsters/:id', async (req, res) => {
 });
 
 // ==========================================
+// ⚔️ ROTAS DE BUILDS
+// ==========================================
+
+// Criar build
+app.post('/builds', async (req, res) => {
+  try {
+    const { title, author } = req.body;
+
+    if (!title || !author) {
+      return res.status(400).json({
+        error: 'Campos obrigatórios: title, author'
+      });
+    }
+
+    const build = {
+      id: Date.now().toString(),
+      rating: 0,
+      ...req.body
+    };
+
+    builds.push(build);
+
+    res.status(201).json(build);
+  } catch (error) {
+    res.status(400).json({
+      error: 'Erro ao criar build'
+    });
+  }
+});
+
+// Listar builds
+app.get('/builds', async (req, res) => {
+  res.json(builds);
+});
+
+// Deletar build
+app.delete('/builds/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    builds = builds.filter(b => b.id !== id);
+
+    res.status(204).send();
+  } catch (error) {
+    res.status(400).json({
+      error: 'Erro ao deletar build'
+    });
+  }
+});
+
+// ==========================================
+// ⭐ ROTAS DE REVIEWS
+// ==========================================
+
+// Criar review
+app.post('/reviews', async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    if (!text) {
+      return res.status(400).json({
+        error: 'Campo obrigatório: text'
+      });
+    }
+
+    const review = {
+      id: Date.now().toString(),
+      text,
+      createdAt: new Date().toISOString()
+    };
+
+    reviews.push(review);
+
+    res.status(201).json(review);
+  } catch (error) {
+    res.status(400).json({
+      error: 'Erro ao criar review'
+    });
+  }
+});
+
+// Listar reviews
+app.get('/reviews', async (req, res) => {
+  res.json(reviews);
+});
+
+// Deletar review
+app.delete('/reviews/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    reviews = reviews.filter(r => r.id !== id);
+
+    res.status(204).send();
+  } catch (error) {
+    res.status(400).json({
+      error: 'Erro ao deletar review'
+    });
+  }
+});
+
+// ==========================================
 // 🐉 API EXTERNA D&D
 // ==========================================
 
 app.get('/api-external/races', async (req, res) => {
   try {
     const races = await dndService.getRaces();
-
     res.json(races);
   } catch (error) {
     res.status(500).json({
@@ -167,7 +288,6 @@ app.get('/api-external/races', async (req, res) => {
 app.get('/api-external/classes', async (req, res) => {
   try {
     const classes = await dndService.getClasses();
-
     res.json(classes);
   } catch (error) {
     res.status(500).json({
@@ -179,7 +299,6 @@ app.get('/api-external/classes', async (req, res) => {
 app.get('/api-external/monsters', async (req, res) => {
   try {
     const monsters = await dndService.getExternalMonsters();
-
     res.json(monsters);
   } catch (error) {
     res.status(500).json({

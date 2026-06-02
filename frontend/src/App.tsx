@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 
+const API = 'http://localhost:3333'
+
 function Home() {
   return (
     <div style={{ padding: 20 }}>
@@ -68,10 +70,8 @@ function Characters() {
   })
 
   async function loadCharacters() {
-    const response = await fetch('http://localhost:3333/characters')
-
+    const response = await fetch(`${API}/characters`)
     const data = await response.json()
-
     setCharacters(data)
   }
 
@@ -81,29 +81,18 @@ function Characters() {
       return
     }
 
-    await fetch('http://localhost:3333/characters', {
+    await fetch(`${API}/characters`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form)
     })
 
-    setForm({
-      name: '',
-      race: '',
-      class: '',
-      level: 1
-    })
-
+    setForm({ name: '', race: '', class: '', level: 1 })
     loadCharacters()
   }
 
   async function deleteCharacter(id: string) {
-    await fetch(`http://localhost:3333/characters/${id}`, {
-      method: 'DELETE'
-    })
-
+    await fetch(`${API}/characters/${id}`, { method: 'DELETE' })
     loadCharacters()
   }
 
@@ -115,104 +104,44 @@ function Characters() {
     <div style={{ padding: 20 }}>
       <h1>🧙 Characters</h1>
 
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 10,
-          maxWidth: 300
-        }}
-      >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 300 }}>
         <input
           placeholder="Name"
           value={form.name}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              name: e.target.value
-            })
-          }
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
         />
-
         <input
           placeholder="Race"
           value={form.race}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              race: e.target.value
-            })
-          }
+          onChange={(e) => setForm({ ...form, race: e.target.value })}
         />
-
         <input
           placeholder="Class"
           value={form.class}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              class: e.target.value
-            })
-          }
+          onChange={(e) => setForm({ ...form, class: e.target.value })}
         />
-
         <input
           type="number"
           placeholder="Level"
           value={form.level}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              level: Number(e.target.value)
-            })
-          }
+          onChange={(e) => setForm({ ...form, level: Number(e.target.value) })}
         />
-
-        <button onClick={createCharacter}>
-          Create Character
-        </button>
+        <button onClick={createCharacter}>Create Character</button>
       </div>
 
       <hr />
 
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 20
-        }}
-      >
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}>
         {characters.map((character) => (
           <div
             key={character.id}
-            style={{
-              border: '1px solid gray',
-              padding: 15,
-              borderRadius: 10,
-              width: 200
-            }}
+            style={{ border: '1px solid gray', padding: 15, borderRadius: 10, width: 200 }}
           >
             <h3>{character.name}</h3>
-
-            <p>
-              <strong>Race:</strong> {character.race}
-            </p>
-
-            <p>
-              <strong>Class:</strong> {character.class}
-            </p>
-
-            <p>
-              <strong>Level:</strong> {character.level}
-            </p>
-
-            <button
-              onClick={() =>
-                deleteCharacter(character.id)
-              }
-            >
-              Delete
-            </button>
+            <p><strong>Race:</strong> {character.race}</p>
+            <p><strong>Class:</strong> {character.class}</p>
+            <p><strong>Level:</strong> {character.level}</p>
+            <button onClick={() => deleteCharacter(character.id)}>Delete</button>
           </div>
         ))}
       </div>
@@ -221,54 +150,89 @@ function Characters() {
 }
 
 function Monsters() {
-  const monsters = [
-    {
-      name: 'Dragon',
-      type: 'Boss',
-      level: 20
-    },
-    {
-      name: 'Goblin',
-      type: 'Minion',
-      level: 2
-    },
-    {
-      name: 'Orc',
-      type: 'Warrior',
-      level: 5
+  const [monsters, setMonsters] = useState<any[]>([])
+
+  const [form, setForm] = useState({
+    name: '',
+    type: '',
+    cr: 1,
+    hp: 10
+  })
+
+  async function loadMonsters() {
+    const response = await fetch(`${API}/monsters`)
+    const data = await response.json()
+    setMonsters(data)
+  }
+
+  async function createMonster() {
+    if (!form.name || !form.type) {
+      alert('Preencha nome e tipo')
+      return
     }
-  ]
+
+    await fetch(`${API}/monsters`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form)
+    })
+
+    setForm({ name: '', type: '', cr: 1, hp: 10 })
+    loadMonsters()
+  }
+
+  async function deleteMonster(id: string) {
+    await fetch(`${API}/monsters/${id}`, { method: 'DELETE' })
+    loadMonsters()
+  }
+
+  useEffect(() => {
+    loadMonsters()
+  }, [])
 
   return (
     <div style={{ padding: 20 }}>
       <h1>👹 Monsters</h1>
 
-      <div
-        style={{
-          display: 'flex',
-          gap: 20,
-          flexWrap: 'wrap'
-        }}
-      >
-        {monsters.map((monster, index) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 300 }}>
+        <input
+          placeholder="Name"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+        />
+        <input
+          placeholder="Type (ex: Humanoide, Dragão)"
+          value={form.type}
+          onChange={(e) => setForm({ ...form, type: e.target.value })}
+        />
+        <input
+          type="number"
+          placeholder="Challenge Rating"
+          value={form.cr}
+          onChange={(e) => setForm({ ...form, cr: Number(e.target.value) })}
+        />
+        <input
+          type="number"
+          placeholder="HP"
+          value={form.hp}
+          onChange={(e) => setForm({ ...form, hp: Number(e.target.value) })}
+        />
+        <button onClick={createMonster}>Create Monster</button>
+      </div>
+
+      <hr />
+
+      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+        {monsters.map((monster) => (
           <div
-            key={index}
-            style={{
-              border: '1px solid gray',
-              padding: 20,
-              borderRadius: 10,
-              width: 200
-            }}
+            key={monster.id}
+            style={{ border: '1px solid gray', padding: 20, borderRadius: 10, width: 200 }}
           >
             <h3>{monster.name}</h3>
-
-            <p>
-              <strong>Type:</strong> {monster.type}
-            </p>
-
-            <p>
-              <strong>Level:</strong> {monster.level}
-            </p>
+            <p><strong>Type:</strong> {monster.type}</p>
+            <p><strong>CR:</strong> {monster.cr}</p>
+            <p><strong>HP:</strong> {monster.hp}</p>
+            <button onClick={() => deleteMonster(monster.id)}>Delete</button>
           </div>
         ))}
       </div>
@@ -277,54 +241,83 @@ function Monsters() {
 }
 
 function Builds() {
-  const builds = [
-    {
-      title: 'Fire Mage',
-      author: 'Samuel',
-      rating: 5
-    },
-    {
-      title: 'Tank Warrior',
-      author: 'Player 2',
-      rating: 4
-    },
-    {
-      title: 'Stealth Rogue',
-      author: 'Player 3',
-      rating: 5
+  const [builds, setBuilds] = useState<any[]>([])
+
+  const [form, setForm] = useState({
+    title: '',
+    author: '',
+    rating: 5
+  })
+
+  async function loadBuilds() {
+    const response = await fetch(`${API}/builds`)
+    const data = await response.json()
+    setBuilds(data)
+  }
+
+  async function createBuild() {
+    if (!form.title || !form.author) {
+      alert('Preencha título e autor')
+      return
     }
-  ]
+
+    await fetch(`${API}/builds`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form)
+    })
+
+    setForm({ title: '', author: '', rating: 5 })
+    loadBuilds()
+  }
+
+  async function deleteBuild(id: string) {
+    await fetch(`${API}/builds/${id}`, { method: 'DELETE' })
+    loadBuilds()
+  }
+
+  useEffect(() => {
+    loadBuilds()
+  }, [])
 
   return (
     <div style={{ padding: 20 }}>
       <h1>⚔️ Builds</h1>
 
-      <div
-        style={{
-          display: 'flex',
-          gap: 20,
-          flexWrap: 'wrap'
-        }}
-      >
-        {builds.map((build, index) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 300 }}>
+        <input
+          placeholder="Title"
+          value={form.title}
+          onChange={(e) => setForm({ ...form, title: e.target.value })}
+        />
+        <input
+          placeholder="Author"
+          value={form.author}
+          onChange={(e) => setForm({ ...form, author: e.target.value })}
+        />
+        <input
+          type="number"
+          placeholder="Rating (1-5)"
+          value={form.rating}
+          min={1}
+          max={5}
+          onChange={(e) => setForm({ ...form, rating: Number(e.target.value) })}
+        />
+        <button onClick={createBuild}>Create Build</button>
+      </div>
+
+      <hr />
+
+      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+        {builds.map((build) => (
           <div
-            key={index}
-            style={{
-              border: '1px solid gray',
-              padding: 20,
-              borderRadius: 10,
-              width: 220
-            }}
+            key={build.id}
+            style={{ border: '1px solid gray', padding: 20, borderRadius: 10, width: 220 }}
           >
             <h3>{build.title}</h3>
-
-            <p>
-              <strong>Author:</strong> {build.author}
-            </p>
-
-            <p>
-              <strong>Rating:</strong> ⭐ {build.rating}
-            </p>
+            <p><strong>Author:</strong> {build.author}</p>
+            <p><strong>Rating:</strong> {'⭐'.repeat(build.rating)}</p>
+            <button onClick={() => deleteBuild(build.id)}>Delete</button>
           </div>
         ))}
       </div>
@@ -333,17 +326,36 @@ function Builds() {
 }
 
 function Reviews() {
-  const [review, setReview] = useState('')
+  const [reviews, setReviews] = useState<any[]>([])
+  const [text, setText] = useState('')
 
-  const [reviews, setReviews] = useState<string[]>([])
-
-  function addReview() {
-    if (!review) return
-
-    setReviews([...reviews, review])
-
-    setReview('')
+  async function loadReviews() {
+    const response = await fetch(`${API}/reviews`)
+    const data = await response.json()
+    setReviews(data)
   }
+
+  async function addReview() {
+    if (!text) return
+
+    await fetch(`${API}/reviews`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    })
+
+    setText('')
+    loadReviews()
+  }
+
+  async function deleteReview(id: string) {
+    await fetch(`${API}/reviews/${id}`, { method: 'DELETE' })
+    loadReviews()
+  }
+
+  useEffect(() => {
+    loadReviews()
+  }, [])
 
   return (
     <div style={{ padding: 20 }}>
@@ -351,36 +363,36 @@ function Reviews() {
 
       <textarea
         placeholder="Write your review..."
-        value={review}
-        onChange={(e) =>
-          setReview(e.target.value)
-        }
-        style={{
-          width: 300,
-          height: 100
-        }}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        style={{ width: 300, height: 100 }}
       />
 
-      <br />
-      <br />
+      <br /><br />
 
-      <button onClick={addReview}>
-        Send Review
-      </button>
+      <button onClick={addReview}>Send Review</button>
 
       <hr />
 
-      {reviews.map((item, index) => (
+      {reviews.map((item) => (
         <div
-          key={index}
+          key={item.id}
           style={{
             border: '1px solid gray',
             padding: 10,
             marginBottom: 10,
-            borderRadius: 10
+            borderRadius: 10,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            maxWidth: 400
           }}
         >
-          {item}
+          <div>
+            <p style={{ margin: 0 }}>{item.text}</p>
+            <small style={{ color: 'gray' }}>{new Date(item.createdAt).toLocaleString('pt-BR')}</small>
+          </div>
+          <button onClick={() => deleteReview(item.id)} style={{ marginLeft: 10 }}>✕</button>
         </div>
       ))}
     </div>
