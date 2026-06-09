@@ -1,82 +1,65 @@
-import { describe, it, expect, afterAll } from '@jest/globals';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import { app } from '../server';
-import { prisma } from '../database/prisma';
+import fs from 'fs';
+import path from 'path';
 
-describe('🌍 Testes de Integração - Monstros', () => {
-  // Alterado para string porque no seu schema o ID é um UUID
-  let monstroIdCriado: string; 
+const DB_FILE = path.resolve(__dirname, '../../data.json');
 
-  // Teste 1: Dispara o POST e verifica o Banco
-  it('deve criar um monstro novo através da rota POST e salvar no banco', async () => {
-    // Agora com os atributos exatos do seu schema.prisma
-    const novoMonstro = {
-      name: 'Goblin de Teste (Integração)',
-      type: 'Humanoide',
-      challengeRating: 0.25,
-      hp: 7,
-      armorClass: 15
-    };
+function resetDB() {
+  fs.writeFileSync(DB_FILE, JSON.stringify(
+    { characters: [], monsters: [], builds: [], reviews: [], campaigns: [] },
+    null, 2
+  ));
+}
 
-    // 1. Simula a requisição chamando a rota exata do seu server.ts
-    const response = await request(app)
-      .post('/monsters') 
-      .send(novoMonstro);
+describe('Monsters Integration Tests', () => {
+  beforeEach(() => resetDB());
 
-    // 2. Confirma se a API respondeu com sucesso
-    expect(response.status).toBeGreaterThanOrEqual(200);
-    expect(response.status).toBeLessThan(300);
-
-    monstroIdCriado = response.body.id; 
-
-    // 3. A PROVA REAL: Vai direto no banco usando o nome correto do model
-    const monstroNoBanco = await prisma.monsterTemplate.findUnique({ 
-      where: { id: monstroIdCriado }
-    });
-
-    // 4. Exige que o monstro exista no banco e tenha o nome correto
-    expect(monstroNoBanco).not.toBeNull();
-    expect(monstroNoBanco?.name).toBe('Goblin de Teste (Integração)');
+  it('deve criar um monstro (POST /monsters)', async () => {
+    const res = await request(app).post('/monsters').send({ name: 'Goblin', type: 'Humanoide', cr: 0.25, hp: 7 });
+    expect(res.status).toBe(201);
+    expect(res.body.name).toBe('Goblin');
   });
 
-  // Teste 2: Dispara o GET para listar
-  it('deve retornar uma lista de monstros na rota GET', async () => {
-    const response = await request(app).get('/monsters'); 
-    
-    expect(response.status).toBe(200);
-    expect(Array.isArray(response.body)).toBe(true);
+  it('deve listar monstros (GET /monsters)', async () => {
+    await request(app).post('/monsters').send({ name: 'Orc', type: 'Humanoide', cr: 0.5, hp: 15 });
+    const res = await request(app).get('/monsters');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBeGreaterThan(0);
   });
 
-  // Limpeza: Apaga o monstro de teste do banco para manter tudo limpo
-  afterAll(async () => {
-    if (monstroIdCriado) {
-      await prisma.monsterTemplate.delete({ 
-        where: { id: monstroIdCriado }
-      });
-    }
-    // Desconecta o banco após os testes para o Jest encerrar corretamente
-    await prisma.$disconnect();
+  it('deve atualizar um monstro (PUT /monsters/:id)', async () => {
+    const created = await request(app).post('/monsters').send({ name: 'Troll', type: 'Gigante', cr: 5, hp: 84 });
+    const res = await request(app).put(`/monsters/${created.body.id}`).send({ hp: 100 });
+    expect(res.status).toBe(200);
+    expect(res.body.hp).toBe(100);
   });
 
-  // =======================================================
-  // 🐉 TESTES DAS ROTAS EXTERNAS (API INTEGRAÇÃO D&D)
-  // =======================================================
+  it('deve deletar um monstro (DELETE /monsters/:id)', async () => {
+    const created = await request(app).post('/monsters').send({ name: 'Kobold', type: 'Humanoide', cr: 0.125, hp: 5 });
+    const res = await request(app).delete(`/monsters/${created.body.id}`);
+    expect(res.status).toBe(204);
+  });
+});
 
-  it('deve listar as raças oficiais da API externa (GET /api-external/races)', async () => {
-    const response = await request(app).get('/api-external/races');
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('results');
+describe('D&D API Externa', () => {
+  it('deve listar raças da API externa (GET /api-external/races)', async () => {
+    const res = await request(app).get('/api-external/races');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('results');
   });
 
-  it('deve listar as classes oficiais da API externa (GET /api-external/classes)', async () => {
-    const response = await request(app).get('/api-external/classes');
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('results');
+  it('deve listar classes da API externa (GET /api-external/classes)', async () => {
+    const res = await request(app).get('/api-external/classes');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('results');
   });
 
-  it('deve listar os monstros oficiais da API externa (GET /api-external/monsters)', async () => {
-    const response = await request(app).get('/api-external/monsters');
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('results');
+  it('deve listar monstros da API externa (GET /api-external/monsters)', async () => {
+    const res = await request(app).get('/api-external/monsters');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('results');
   });
 });

@@ -13,7 +13,7 @@ interface Character {
 
 export default function CharacterCrud() {
   const [characters, setCharacters] = useState<Character[]>([]);
-  
+
   const [formData, setFormData] = useState<Character>({
     id: null,
     name: '',
@@ -29,10 +29,10 @@ export default function CharacterCrud() {
     const { name, value } = e.target;
     // O TypeScript exige que os campos numéricos sejam convertidos de texto para número
     const isNumberField = ['hpMax', 'armorClass', 'strength', 'dexterity'].includes(name);
-    
-    setFormData({ 
-      ...formData, 
-      [name]: isNumberField ? Number(value) : value 
+
+    setFormData({
+      ...formData,
+      [name]: isNumberField ? Number(value) : value
     });
   };
 
@@ -66,13 +66,26 @@ export default function CharacterCrud() {
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif', color: '#333' }}>
-      <h2>🛡️ Gerenciador de Builds (Personagens)</h2>
-      
+    <div className="page">
+      <h2>🧙 Character Manager</h2>
+
+      <p>
+        Crie, edite e gerencie personagens para suas campanhas.
+      </p>
+
+
+      <div className="dashboard-card">
+        <h3>Total de Personagens</h3>
+        <h1>{characters.length}</h1>
+      </div>
+
+      <br />
+
+
       {/* FORMULÁRIO */}
-      <form onSubmit={handleSubmit} style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ccc', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
+      <form onSubmit={handleSubmit} className="form-card">
         <h3>{formData.id ? '✏️ Editar Personagem' : '➕ Novo Personagem'}</h3>
-        
+
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
           <input type="text" name="name" placeholder="Nome do Personagem" value={formData.name} onChange={handleInputChange} required style={{ padding: '8px', flex: 1 }} />
           <input type="text" name="characterClass" placeholder="Classe (Ex: Guerreiro)" value={formData.characterClass} onChange={handleInputChange} required style={{ padding: '8px', flex: 1 }} />
@@ -99,9 +112,14 @@ export default function CharacterCrud() {
       {characters.length === 0 ? <p style={{ color: '#666' }}>Nenhum personagem criado ainda.</p> : (
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {characters.map(char => (
-            <li key={char.id || 'temp'} style={{ border: '1px solid #ddd', borderRadius: '6px', padding: '12px', marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff' }}>
+
+
+            <li
+              key={char.id}
+              className="entity-card"
+            >
               <div>
-                <strong style={{ fontSize: '18px' }}>{char.name}</strong> — <span style={{ color: '#007bff' }}>{char.characterClass}</span> <br/>
+                <strong style={{ fontSize: '18px' }}>{char.name}</strong> — <span style={{ color: '#007bff' }}>{char.characterClass}</span> <br />
                 <small style={{ color: '#555' }}>HP: {char.hpMax} | CA: {char.armorClass} | FOR: {char.strength} | DES: {char.dexterity}</small>
               </div>
               <div>

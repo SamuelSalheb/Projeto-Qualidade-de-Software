@@ -25,3 +25,13 @@ export function somarAtributos(atributos: Atributos): number {
     atributos.carisma
   );
 }
+
+// Função 3: Valida se uma senha tem mínimo de 6 caracteres
+export function isValidPassword(password: string): boolean {
+  return password.length >= 6;
+}
+
+// Função 4: Calcula o modificador de atributo D&D (ex: 15 → +2)
+export function calcularModificador(atributo: number): number {
+  return Math.floor((atributo - 10) / 2);
+}

@@ -12,7 +12,7 @@ interface Monster {
 
 export default function MonsterCrud() {
   const [monsters, setMonsters] = useState<Monster[]>([]);
-  
+
   const [formData, setFormData] = useState<Monster>({
     id: null,
     name: '',
@@ -26,10 +26,10 @@ export default function MonsterCrud() {
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     const isNumberField = ['hpMax', 'armorClass', 'strength', 'dexterity'].includes(name);
-    
-    setFormData({ 
-      ...formData, 
-      [name]: isNumberField ? Number(value) : value 
+
+    setFormData({
+      ...formData,
+      [name]: isNumberField ? Number(value) : value
     });
   };
 
@@ -58,12 +58,19 @@ export default function MonsterCrud() {
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif', color: '#333' }}>
+    <div className="page">
       <h2>👹 Gerenciador do Mestre (Monstros Customizados)</h2>
-      
-      <form onSubmit={handleSubmit} style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ccc', borderRadius: '8px', backgroundColor: '#fdf3f3' }}>
+
+      <div className="dashboard-card">
+        <h3>Total de Monstros</h3>
+        <h1>{monsters.length}</h1>
+      </div>
+
+      <br />
+
+      <form onSubmit={handleSubmit} className="form-card">
         <h3>{formData.id ? '✏️ Editar Monstro' : '➕ Cadastrar Novo Monstro'}</h3>
-        
+
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
           <input type="text" name="name" placeholder="Nome do Monstro (Ex: Goblin)" value={formData.name} onChange={handleInputChange} required style={{ padding: '8px', flex: 2 }} />
           <input type="text" name="imageUrl" placeholder="URL da Imagem (Opcional)" value={formData.imageUrl} onChange={handleInputChange} style={{ padding: '8px', flex: 1 }} />
@@ -89,11 +96,11 @@ export default function MonsterCrud() {
       {monsters.length === 0 ? <p style={{ color: '#666' }}>Nenhum monstro cadastrado ainda.</p> : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {monsters.map(monster => (
-            <div key={monster.id || 'temp'} style={{ border: '1px solid #ddd', borderRadius: '6px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff' }}>
+            <div key={monster.id || 'temp'} className="entity-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 {monster.imageUrl && <img src={monster.imageUrl} alt={monster.name} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />}
                 <div>
-                  <strong style={{ fontSize: '18px', color: '#c92a2a' }}>{monster.name}</strong><br/>
+                  <strong style={{ fontSize: '18px', color: '#c92a2a' }}>{monster.name}</strong><br />
                   <small style={{ color: '#555' }}>HP: {monster.hpMax} | CA: {monster.armorClass} | FOR: {monster.strength} | DES: {monster.dexterity}</small>
                 </div>
               </div>

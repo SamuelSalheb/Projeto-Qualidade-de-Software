@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { isValidEmail, somarAtributos } from './validators';
+import { isValidEmail, somarAtributos, isValidPassword, calcularModificador } from './validators';
 
 describe('🧪 Testes Unitários - Validações e Utilitários', () => {
 
@@ -30,8 +30,29 @@ describe('🧪 Testes Unitários - Validações e Utilitários', () => {
 
       // A soma matemática deve dar: 15 + 14 + 13 + 12 + 10 + 8 = 72
       const total = somarAtributos(fichaPersonagem);
-      
+
       expect(total).toBe(72);
+    });
+  });
+
+  describe('isValidPassword', () => {
+    it('deve retornar TRUE para senha com 6 ou mais caracteres', () => {
+      expect(isValidPassword('abc123')).toBe(true);
+    });
+    it('deve retornar FALSE para senha com menos de 6 caracteres', () => {
+      expect(isValidPassword('abc')).toBe(false);
+    });
+  });
+
+  describe('calcularModificador', () => {
+    it('deve retornar +2 para atributo 15', () => {
+      expect(calcularModificador(15)).toBe(2);
+    });
+    it('deve retornar 0 para atributo 10', () => {
+      expect(calcularModificador(10)).toBe(0);
+    });
+    it('deve retornar -1 para atributo 8', () => {
+      expect(calcularModificador(8)).toBe(-1);
     });
   });
 

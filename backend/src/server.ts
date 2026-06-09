@@ -1,320 +1,64 @@
+
 import express from 'express';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
 import { dndService } from './services/dndService';
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
-// ==========================================
-// BANCO SIMPLES EM MEMÓRIA
-// ==========================================
+const DB_FILE = path.resolve(__dirname, '../data.json');
 
-let characters: any[] = [];
-let monsters: any[] = [];
-let builds: any[] = [];
-let reviews: any[] = [];
+type DB = { characters: any[]; monsters: any[]; builds: any[]; reviews: any[]; campaigns: any[] };
 
-// ==========================================
-// 🧙‍♂️ ROTAS DE PERSONAGENS
-// ==========================================
-
-// Criar personagem
-app.post('/characters', async (req, res) => {
-  try {
-    const { name, race, class: cls } = req.body;
-
-    if (!name || !race || !cls) {
-      return res.status(400).json({
-        error: 'Campos obrigatórios: name, race, class'
-      });
-    }
-
-    const character = {
-      id: Date.now().toString(),
-      ...req.body
-    };
-
-    characters.push(character);
-
-    res.status(201).json(character);
-  } catch (error) {
-    res.status(400).json({
-      error: 'Erro ao criar personagem'
-    });
+function loadDB(): DB {
+  if (!fs.existsSync(DB_FILE)) {
+    const initial = { characters: [], monsters: [], builds: [], reviews: [], campaigns: [] };
+    fs.writeFileSync(DB_FILE, JSON.stringify(initial, null, 2));
+    return initial;
   }
-});
+  return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+}
+function saveDB(db: DB) { fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2)); }
+const id = () => Date.now().toString();
 
-// Listar personagens
-app.get('/characters', async (req, res) => {
-  res.json(characters);
-});
-
-// Atualizar personagem
-app.put('/characters/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const index = characters.findIndex(c => c.id === id);
-
-    if (index === -1) {
-      return res.status(404).json({
-        error: 'Personagem não encontrado'
-      });
-    }
-
-    characters[index] = {
-      ...characters[index],
-      ...req.body
-    };
-
-    res.json(characters[index]);
-  } catch (error) {
-    res.status(400).json({
-      error: 'Erro ao atualizar personagem'
-    });
-  }
-});
-
-// Deletar personagem
-app.delete('/characters/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    characters = characters.filter(c => c.id !== id);
-
-    res.status(204).send();
-  } catch (error) {
-    res.status(400).json({
-      error: 'Erro ao deletar personagem'
-    });
-  }
-});
-
-// ==========================================
-// 👹 ROTAS DE MONSTROS
-// ==========================================
-
-// Criar monstro
-app.post('/monsters', async (req, res) => {
-  try {
-    const { name, type } = req.body;
-
-    if (!name || !type) {
-      return res.status(400).json({
-        error: 'Campos obrigatórios: name, type'
-      });
-    }
-
-    const monster = {
-      id: Date.now().toString(),
-      ...req.body
-    };
-
-    monsters.push(monster);
-
-    res.status(201).json(monster);
-  } catch (error) {
-    res.status(400).json({
-      error: 'Erro ao criar monstro'
-    });
-  }
-});
-
-// Listar monstros
-app.get('/monsters', async (req, res) => {
-  res.json(monsters);
-});
-
-// Atualizar monstro
-app.put('/monsters/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const index = monsters.findIndex(m => m.id === id);
-
-    if (index === -1) {
-      return res.status(404).json({
-        error: 'Monstro não encontrado'
-      });
-    }
-
-    monsters[index] = {
-      ...monsters[index],
-      ...req.body
-    };
-
-    res.json(monsters[index]);
-  } catch (error) {
-    res.status(400).json({
-      error: 'Erro ao atualizar monstro'
-    });
-  }
-});
-
-// Deletar monstro
-app.delete('/monsters/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    monsters = monsters.filter(m => m.id !== id);
-
-    res.status(204).send();
-  } catch (error) {
-    res.status(400).json({
-      error: 'Erro ao deletar monstro'
-    });
-  }
-});
-
-// ==========================================
-// ⚔️ ROTAS DE BUILDS
-// ==========================================
-
-// Criar build
-app.post('/builds', async (req, res) => {
-  try {
-    const { title, author } = req.body;
-
-    if (!title || !author) {
-      return res.status(400).json({
-        error: 'Campos obrigatórios: title, author'
-      });
-    }
-
-    const build = {
-      id: Date.now().toString(),
-      rating: 0,
-      ...req.body
-    };
-
-    builds.push(build);
-
-    res.status(201).json(build);
-  } catch (error) {
-    res.status(400).json({
-      error: 'Erro ao criar build'
-    });
-  }
-});
-
-// Listar builds
-app.get('/builds', async (req, res) => {
-  res.json(builds);
-});
-
-// Deletar build
-app.delete('/builds/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    builds = builds.filter(b => b.id !== id);
-
-    res.status(204).send();
-  } catch (error) {
-    res.status(400).json({
-      error: 'Erro ao deletar build'
-    });
-  }
-});
-
-// ==========================================
-// ⭐ ROTAS DE REVIEWS
-// ==========================================
-
-// Criar review
-app.post('/reviews', async (req, res) => {
-  try {
-    const { text } = req.body;
-
-    if (!text) {
-      return res.status(400).json({
-        error: 'Campo obrigatório: text'
-      });
-    }
-
-    const review = {
-      id: Date.now().toString(),
-      text,
-      createdAt: new Date().toISOString()
-    };
-
-    reviews.push(review);
-
-    res.status(201).json(review);
-  } catch (error) {
-    res.status(400).json({
-      error: 'Erro ao criar review'
-    });
-  }
-});
-
-// Listar reviews
-app.get('/reviews', async (req, res) => {
-  res.json(reviews);
-});
-
-// Deletar review
-app.delete('/reviews/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    reviews = reviews.filter(r => r.id !== id);
-
-    res.status(204).send();
-  } catch (error) {
-    res.status(400).json({
-      error: 'Erro ao deletar review'
-    });
-  }
-});
-
-// ==========================================
-// 🐉 API EXTERNA D&D
-// ==========================================
-
-app.get('/api-external/races', async (req, res) => {
-  try {
-    const races = await dndService.getRaces();
-    res.json(races);
-  } catch (error) {
-    res.status(500).json({
-      error: 'Erro ao buscar raças'
-    });
-  }
-});
-
-app.get('/api-external/classes', async (req, res) => {
-  try {
-    const classes = await dndService.getClasses();
-    res.json(classes);
-  } catch (error) {
-    res.status(500).json({
-      error: 'Erro ao buscar classes'
-    });
-  }
-});
-
-app.get('/api-external/monsters', async (req, res) => {
-  try {
-    const monsters = await dndService.getExternalMonsters();
-    res.json(monsters);
-  } catch (error) {
-    res.status(500).json({
-      error: 'Erro ao buscar monstros'
-    });
-  }
-});
-
-// ==========================================
-// SERVIDOR
-// ==========================================
-
-if (!process.env.JEST_WORKER_ID) {
-  app.listen(3333, () => {
-    console.log('🚀 Servidor do Back-End rodando na porta 3333!');
-  });
+function crudRoutes(route: string, key: keyof DB) {
+  app.post(`/${route}`, (req, res) => { const db = loadDB(); const item = { id: id(), ...req.body }; db[key].push(item); saveDB(db); res.status(201).json(item); });
+  app.get(`/${route}`, (req, res) => { res.json(loadDB()[key]); });
+  app.put(`/${route}/:id`, (req, res) => { const db = loadDB(); const i = db[key].findIndex((x: any) => x.id === req.params.id); if (i === -1) return res.status(404).json({ error: 'Não encontrado' }); db[key][i] = { ...db[key][i], ...req.body }; saveDB(db); res.json(db[key][i]); });
+  app.delete(`/${route}/:id`, (req, res) => { const db = loadDB(); db[key] = db[key].filter((x: any) => x.id !== req.params.id) as any; saveDB(db); res.status(204).send(); });
 }
 
+crudRoutes('characters', 'characters');
+crudRoutes('monsters', 'monsters');
+crudRoutes('builds', 'builds');
+crudRoutes('reviews', 'reviews');
+crudRoutes('campaigns', 'campaigns');
+
+app.get('/api-external/races', async (_, res) => res.json(await dndService.getRaces()));
+app.get('/api-external/classes', async (_, res) => res.json(await dndService.getClasses()));
+app.get('/api-external/monsters', async (_, res) => res.json(await dndService.getExternalMonsters()));
+app.get('/api-external/spells', async (_, res) => res.json(await dndService.getSpells()));
+app.get('/api-external/equipment', async (_, res) => res.json(await dndService.getEquipment()));
+app.get('/', (_, res) => {
+  res.json({
+    message: 'API D&D funcionando',
+    endpoints: [
+      '/characters',
+      '/monsters',
+      '/builds',
+      '/reviews',
+      '/campaigns',
+      '/api-external/races',
+      '/api-external/classes',
+      '/api-external/monsters',
+      '/api-external/spells',
+      '/api-external/equipment'
+    ]
+  });
+});
+
+if (!process.env.JEST_WORKER_ID) app.listen(3333, () => console.log('Servidor 3333'));
 export { app };

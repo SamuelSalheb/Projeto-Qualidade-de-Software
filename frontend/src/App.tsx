@@ -399,6 +399,62 @@ function Reviews() {
   )
 }
 
+function Compendium() {
+  const [races, setRaces] = useState<any[]>([])
+  const [classes, setClasses] = useState<any[]>([])
+  const [spells, setSpells] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+      const [rRes, cRes, sRes] = await Promise.all([
+        fetch(`${API}/api-external/races`),
+        fetch(`${API}/api-external/classes`),
+        fetch(`${API}/api-external/spells`),
+      ])
+      const rData = await rRes.json()
+      const cData = await cRes.json()
+      const sData = await sRes.json()
+      setRaces(rData.results || [])
+      setClasses(cData.results || [])
+      setSpells((sData.results || []).slice(0, 20))
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  if (loading) return <p style={{ padding: 20 }}>Carregando compêndio...</p>
+
+  return (
+    <div style={{ padding: 20 }}>
+      <h1>📖 Compêndio D&D 5e</h1>
+
+      <h2>🧬 Raças</h2>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+        {races.map((r: any) => (
+          <span key={r.index} style={{ background: '#eee', padding: '4px 12px', borderRadius: 20 }}>{r.name}</span>
+        ))}
+      </div>
+
+      <h2>⚔️ Classes</h2>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+        {classes.map((c: any) => (
+          <span key={c.index} style={{ background: '#dde', padding: '4px 12px', borderRadius: 20 }}>{c.name}</span>
+        ))}
+      </div>
+
+      <h2>🔮 Magias (primeiras 20)</h2>
+      <ul>
+        {spells.map((s: any) => (
+          <li key={s.index}>{s.name}</li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -409,6 +465,7 @@ export default function App() {
           <Link to="/monsters">Monsters</Link>
           <Link to="/builds">Builds</Link>
           <Link to="/reviews">Reviews</Link>
+          <Link to="/compendium">Compêndio</Link>
         </nav>
 
         <hr />
@@ -419,6 +476,7 @@ export default function App() {
           <Route path="/monsters" element={<Monsters />} />
           <Route path="/builds" element={<Builds />} />
           <Route path="/reviews" element={<Reviews />} />
+          <Route path="/compendium" element={<Compendium />} />
         </Routes>
       </div>
     </BrowserRouter>
