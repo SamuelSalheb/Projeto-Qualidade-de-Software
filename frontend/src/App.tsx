@@ -3,6 +3,109 @@ import { useEffect, useState } from 'react'
 
 const API = 'http://localhost:3333'
 
+
+function Login() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
+  async function login() {
+    const response = await fetch(`${API}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email,
+        password
+      })
+    })
+
+    const data = await response.json()
+
+    if (data.token) {
+      alert('Login realizado')
+      localStorage.setItem('token', data.token)
+    } else {
+      alert('Login inválido')
+    }
+  }
+
+  return (
+    <div style={{ padding: 20 }}>
+      <h1>Login</h1>
+
+      <input
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+
+      <br /><br />
+
+      <input
+        type="password"
+        placeholder="Senha"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+
+      <br /><br />
+
+      <button onClick={login}>
+        Entrar
+      </button>
+    </div>
+  )
+}
+
+
+function Register() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
+  async function register() {
+    await fetch(`${API}/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email,
+        password
+      })
+    })
+
+    alert('Usuário cadastrado')
+  }
+
+  return (
+    <div style={{ padding: 20 }}>
+      <h1>Cadastro</h1>
+
+      <input
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+
+      <br /><br />
+
+      <input
+        type="password"
+        placeholder="Senha"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+
+      <br /><br />
+
+      <button onClick={register}>
+        Cadastrar
+      </button>
+    </div>
+  )
+}
+
 function Home() {
   return (
     <div style={{ padding: 20 }}>
@@ -243,10 +346,16 @@ function Monsters() {
 function Builds() {
   const [builds, setBuilds] = useState<any[]>([])
 
+  const [editingId, setEditingId] =
+    useState<string | null>(null)
+
   const [form, setForm] = useState({
     title: '',
     author: '',
-    rating: 5
+    className: '',
+    rating: 5,
+    favorite: false,
+    items: []
   })
 
   async function loadBuilds() {
@@ -295,6 +404,24 @@ function Builds() {
           value={form.author}
           onChange={(e) => setForm({ ...form, author: e.target.value })}
         />
+        <select
+          value={form.className}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              className: e.target.value
+            })
+          }
+        >
+          <option value="">
+            Escolha uma classe
+          </option>
+
+          <option>Wizard</option>
+          <option>Fighter</option>
+          <option>Rogue</option>
+          <option>Cleric</option>
+        </select>
         <input
           type="number"
           placeholder="Rating (1-5)"
@@ -323,6 +450,45 @@ function Builds() {
       </div>
     </div>
   )
+
+  async function updateBuild() {
+
+    await fetch(
+      `${API}/builds/${editingId}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(form)
+      }
+    )
+
+    setEditingId(null)
+
+    loadBuilds()
+  }
+
+
+  async function favoriteBuild(build: any) {
+
+    await fetch(
+      `${API}/builds/${build.id}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          favorite: !build.favorite
+        })
+      }
+    )
+
+    loadBuilds()
+  }
+
+
 }
 
 function Reviews() {
@@ -403,53 +569,210 @@ function Compendium() {
   const [races, setRaces] = useState<any[]>([])
   const [classes, setClasses] = useState<any[]>([])
   const [spells, setSpells] = useState<any[]>([])
+  const [items, setItems] = useState<any[]>([])
+
+  const [search, setSearch] = useState('')
+
   const [loading, setLoading] = useState(true)
 
+  async function loadData() {
+    setLoading(true)
+
+    const [
+      racesRes,
+      classesRes,
+      spellsRes,
+      itemsRes
+    ] = await Promise.all([
+      fetch(`${API}/api-external/races`),
+      fetch(`${API}/api-external/classes`),
+      fetch(`${API}/api-external/spells`),
+      fetch(`${API}/api-external/items`)
+    ])
+
+    const racesData = await racesRes.json()
+    const classesData = await classesRes.json()
+    const spellsData = await spellsRes.json()
+    const itemsData = await itemsRes.json()
+
+    setRaces(racesData.results || [])
+    setClasses(classesData.results || [])
+    setSpells(spellsData.results || [])
+    setItems(itemsData.results || [])
+
+    setLoading(false)
+  }
+
+  async function syncApi() {
+    const response = await fetch(
+      `${API}/sync`,
+      {
+        method: 'POST'
+      }
+    )
+
+    const data = await response.json()
+
+    alert(
+      `Sincronização concluída!\n\nRaças: ${data.races}\nClasses: ${data.classes}\nMagias: ${data.spells}`
+    )
+  }
+
   useEffect(() => {
-    async function load() {
-      setLoading(true)
-      const [rRes, cRes, sRes] = await Promise.all([
-        fetch(`${API}/api-external/races`),
-        fetch(`${API}/api-external/classes`),
-        fetch(`${API}/api-external/spells`),
-      ])
-      const rData = await rRes.json()
-      const cData = await cRes.json()
-      const sData = await sRes.json()
-      setRaces(rData.results || [])
-      setClasses(cData.results || [])
-      setSpells((sData.results || []).slice(0, 20))
-      setLoading(false)
-    }
-    load()
+    loadData()
   }, [])
 
-  if (loading) return <p style={{ padding: 20 }}>Carregando compêndio...</p>
+  const filteredItems = items.filter(
+    (item) =>
+      item.name
+        ?.toLowerCase()
+        .includes(search.toLowerCase())
+  )
+
+  if (loading) {
+    return (
+      <div style={{ padding: 20 }}>
+        <h2>Carregando Compêndio...</h2>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: 20 }}>
       <h1>📖 Compêndio D&D 5e</h1>
 
+      <button
+        onClick={syncApi}
+        style={{
+          padding: 10,
+          marginBottom: 20
+        }}
+      >
+        🔄 Sincronizar API
+      </button>
+
+      <hr />
+
       <h2>🧬 Raças</h2>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-        {races.map((r: any) => (
-          <span key={r.index} style={{ background: '#eee', padding: '4px 12px', borderRadius: 20 }}>{r.name}</span>
+
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 10
+        }}
+      >
+        {races.map((race) => (
+          <div
+            key={race.index}
+            style={{
+              border: '1px solid #ccc',
+              borderRadius: 10,
+              padding: 10
+            }}
+          >
+            {race.name}
+          </div>
         ))}
       </div>
+
+      <hr />
 
       <h2>⚔️ Classes</h2>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-        {classes.map((c: any) => (
-          <span key={c.index} style={{ background: '#dde', padding: '4px 12px', borderRadius: 20 }}>{c.name}</span>
+
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 10
+        }}
+      >
+        {classes.map((classe) => (
+          <div
+            key={classe.index}
+            style={{
+              border: '1px solid #ccc',
+              borderRadius: 10,
+              padding: 10
+            }}
+          >
+            {classe.name}
+          </div>
         ))}
       </div>
 
-      <h2>🔮 Magias (primeiras 20)</h2>
-      <ul>
-        {spells.map((s: any) => (
-          <li key={s.index}>{s.name}</li>
+      <hr />
+
+      <h2>🔮 Magias</h2>
+
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 10
+        }}
+      >
+        {spells.slice(0, 20).map((spell) => (
+          <div
+            key={spell.index}
+            style={{
+              border: '1px solid #ccc',
+              borderRadius: 10,
+              padding: 10
+            }}
+          >
+            {spell.name}
+          </div>
         ))}
-      </ul>
+      </div>
+
+      <hr />
+
+      <h2>🛡️ Equipamentos e Itens</h2>
+
+      <input
+        type="text"
+        placeholder="Buscar item..."
+        value={search}
+        onChange={(e) =>
+          setSearch(e.target.value)
+        }
+        style={{
+          padding: 10,
+          width: 300,
+          marginBottom: 20
+        }}
+      />
+
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 10
+        }}
+      >
+        {filteredItems.slice(0, 50).map((item) => (
+          <div
+            key={item.index}
+            style={{
+              border: '1px solid #ccc',
+              borderRadius: 10,
+              padding: 10,
+              width: 220
+            }}
+          >
+            <strong>
+              {item.name}
+            </strong>
+
+            <p>
+              Categoria:
+              {' '}
+              {item.equipment_category?.name}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
